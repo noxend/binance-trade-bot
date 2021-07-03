@@ -1,8 +1,10 @@
 import qs from "qs";
+import WebSocket from "ws";
 import axios, { AxiosRequestConfig } from "axios";
 import { createHmac } from "crypto";
 
 const fapi = "https://fapi.binance.com/fapi/";
+const fstream = "wss://fstream.binance.com/ws/";
 
 type Symbol = "BTCUSDT" | "ETHUSDT";
 
@@ -22,6 +24,37 @@ type PositionSide = "BOTH" | "LONG" | "SHORT";
 type TimeInForce = "GTC" | "IOC" | "FOK" | "GTX";
 
 type Asset = "BNB" | "BUSD" | "USDT";
+
+type OrderUpdate = {
+  s: Symbol;
+  c: string; // Client order id
+  S: OrderSide;
+  o: OrderType;
+  f: TimeInForce; // Time in force
+  q: string; // Original quantity
+  p: string; // Original price
+  ap: string; // Average Price
+  sp: string; // Stop Price
+  x: string; // Execution Type
+  X: string; // Order Status
+  ps: PositionSide;
+  ot: OrderType;
+  rp: string; // Realized Profit
+};
+
+const ORDER_TRADE_UPDATE = "ORDER_TRADE_UPDATE";
+const ACCOUNT_UPDATE = "ACCOUNT_UPDATE";
+
+type Update = {
+  E: number; // Event time
+  T: number; // Transaction Time
+} & (
+  | {
+      e: typeof ORDER_TRADE_UPDATE;
+      o: OrderUpdate;
+    }
+  | { e: typeof ACCOUNT_UPDATE; a: any }
+);
 
 interface AccountBalanceAsset {
   accountAlias: string;
@@ -53,7 +86,7 @@ interface FuturesNewOrderParams {
 export default class BinanceApi {
   public constructor(private apiKey: string, private secretKey: string) {}
 
-  public async makeApiCall(
+  public async privateRequest(
     url: string,
     base: string,
     params: any = {},
@@ -103,20 +136,63 @@ export default class BinanceApi {
     }
   }
 
-  public futuresPing = () => this.makeApiCall("v1/ping", fapi);
+  public futuresPing() {
+    return this.privateRequest("v1/ping", fapi);
+  }
 
-  public futuresServerTime = () => this.makeApiCall("v1/time", fapi);
+  public futuresServerTime() {
+    return this.privateRequest("v1/time", fapi);
+  }
 
-  public futuresAccountBalance = (): Promise<AccountBalanceAsset[]> =>
-    this.makeApiCall("v2/balance", fapi);
+  public futuresAccountBalance(): Promise<AccountBalanceAsset[]> {
+    return this.privateRequest("v2/balance", fapi);
+  }
 
-  public futuresNewOrder = (params: FuturesNewOrderParams) =>
-    this.makeApiCall("v1/order", fapi, params, { method: "POST" });
+  public futuresNewOrder(params: FuturesNewOrderParams) {
+    return this.privateRequest("v1/order", fapi, params, { method: "POST" });
+  }
 
-  public futuresExchangeInfo = () => this.makeApiCall("v1/exchangeInfo", fapi);
+  public futuresExchangeInfo() {
+    return this.privateRequest("v1/exchangeInfo", fapi);
+  }
 
-  public futuresSymbolPriceTicker = (symbol: Symbol) =>
-    this.publicRequest("v1/ticker/price", fapi, { symbol });
+  public futuresSymbolPriceTicker(symbol: Symbol) {
+    return this.publicRequest("v1/ticker/price", fapi, { symbol });
+  }
+
+  public futuresStartDataStream() {
+    return this.privateRequest("v1/listenKey", fapi, {}, { method: "POST" });
+  }
+
+  public futuresKeepDataStream() {
+    return this.privateRequest("v1/listenKey", fapi, {}, { method: "PUT" });
+  }
+
+  public futuresDeleteDataStream() {
+    return this.privateRequest("v1/listenKey", fapi, {}, { method: "DELETE" });
+  }
+
+  public futuresSubscribeToUpdates(listenKey: string, cb: (update: Update) => void): WebSocket {
+    const ws = new WebSocket(`${fstream}${listenKey}`);
+
+    ws.on("error", (error) => {
+      console.error(`WebSocket error: ${error.message}`);
+    });
+
+    ws.on("message", (data) => {
+      try {
+        cb(JSON.parse(data.toString()));
+      } catch (error) {
+        console.log(`Parse error: ${error.message}`);
+      }
+    });
+
+    ws.on("open", () => {
+      console.info("WebSocket has been connected");
+    });
+
+    return ws;
+  }
 
   public async getSymbolInfo(symbol: Symbol) {
     const { symbols } = await this.futuresExchangeInfo();
