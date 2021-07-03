@@ -86,16 +86,9 @@ interface FuturesNewOrderParams {
 export default class BinanceApi {
   public constructor(private apiKey: string, private secretKey: string) {}
 
-  public async privateRequest(
-    url: string,
-    base: string,
-    params: any = {},
-    axiosConfig: AxiosRequestConfig = {}
-  ) {
+  public async privateRequest(url: string, base: string, params: any = {}, axiosConfig: AxiosRequestConfig = {}) {
     params.timestamp = Date.now();
-    params.signature = createHmac("sha256", this.secretKey)
-      .update(qs.stringify(params))
-      .digest("hex");
+    params.signature = createHmac("sha256", this.secretKey).update(qs.stringify(params)).digest("hex");
 
     const query = qs.stringify(params, { addQueryPrefix: true });
 
@@ -115,12 +108,7 @@ export default class BinanceApi {
     }
   }
 
-  public async publicRequest(
-    url: string,
-    base: string,
-    params: any = {},
-    axiosConfig: AxiosRequestConfig = {}
-  ) {
+  public async publicRequest(url: string, base: string, params: any = {}, axiosConfig: AxiosRequestConfig = {}) {
     const query = qs.stringify(params, { addQueryPrefix: true });
 
     try {
@@ -191,7 +179,21 @@ export default class BinanceApi {
       console.info("WebSocket has been connected");
     });
 
+    ws.on("close", (code, reason) => {
+      console.info(`WebSocket has been closed. ${reason}`);
+    });
+
     return ws;
+  }
+
+  public async futuresListenUpdates(cb: (update: Update) => void) {
+    const { listenKey } = await this.futuresStartDataStream();
+
+    this.futuresSubscribeToUpdates(listenKey, cb).on("open", () => {
+      setInterval(() => {
+        this.futuresKeepDataStream();
+      }, 60 * 30 * 1000);
+    });
   }
 
   public async getSymbolInfo(symbol: Symbol) {
@@ -204,9 +206,7 @@ export default class BinanceApi {
     return (<any[]>assets).find((item) => item.asset === asset);
   }
 
-  public async getFuturesAccountBalanceByAsset(
-    asset: Asset
-  ): Promise<AccountBalanceAsset | undefined> {
+  public async getFuturesAccountBalanceByAsset(asset: Asset): Promise<AccountBalanceAsset | undefined> {
     const data = await this.futuresAccountBalance();
     return data.find((item) => item.asset === asset);
   }
