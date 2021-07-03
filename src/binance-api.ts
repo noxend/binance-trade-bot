@@ -160,7 +160,7 @@ export default class BinanceApi {
     return this.privateRequest("v1/listenKey", fapi, {}, { method: "DELETE" });
   }
 
-  public futuresSubscribeToUpdates(listenKey: string, cb: (update: Update) => void): WebSocket {
+  public futuresSubscribe(listenKey: string, cb: Function): WebSocket {
     const ws = new WebSocket(`${fstream}${listenKey}`);
 
     ws.on("error", (error) => {
@@ -186,10 +186,10 @@ export default class BinanceApi {
     return ws;
   }
 
-  public async futuresListenUpdates(cb: (update: Update) => void) {
+  public async futuresSubscribeToUpdates(cb: (update: Update) => void) {
     const { listenKey } = await this.futuresStartDataStream();
 
-    this.futuresSubscribeToUpdates(listenKey, cb).on("open", () => {
+    this.futuresSubscribe(listenKey, cb).on("open", () => {
       setInterval(() => {
         this.futuresKeepDataStream();
       }, 60 * 30 * 1000);
