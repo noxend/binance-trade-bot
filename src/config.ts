@@ -7,6 +7,8 @@ const config = {
   TELEGRAM_API_HASH: process.env.TELEGRAM_API_HASH,
   TELEGRAM_API_ID: process.env.TELEGRAM_API_ID,
   MONGO_URI: process.env.MONGO_URI,
+  BINANCE_API_KEY: process.env.BINANCE_API_KEY,
+  BINANCE_SECRET_KEY: process.env.BINANCE_SECRET_KEY,
 };
 
 export default config;

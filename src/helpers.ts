@@ -1,5 +1,3 @@
-import { createHmac } from "crypto";
-
 export const parseMessage = (message: string) => ({
   crypto: message.match(/(?<=Сигнал:\n)(.*?)(?=\s\s[шорт|лонг])/)?.[0],
   sl: message.match(/(?<=Стоп - лосс : )(.*?)(?=\s)/)?.[0],
@@ -45,6 +43,3 @@ export const generateMessage = ({
 
   return message;
 };
-
-export const generateSignature = (str: string, key: string) =>
-  createHmac("sha256", key).update(str).digest("hex");
