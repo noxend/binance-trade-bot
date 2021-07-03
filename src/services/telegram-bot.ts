@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 
-import config from "@/config";
+import config from "../config";
 
 if (!config.TELEGRAM_BOT_TOKEN) throw new Error("Telegram token not provided");
 

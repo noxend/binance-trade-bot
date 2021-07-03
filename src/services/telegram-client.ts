@@ -2,7 +2,7 @@ import { StringSession } from "telegram/sessions";
 import { Logger } from "telegram/extensions";
 import { TelegramClient } from "telegram";
 
-import config from "@/config";
+import config from "../config";
 
 const stringSession = new StringSession(process.env.SESSION);
 
