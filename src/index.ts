@@ -4,8 +4,9 @@ import bot from './services/telegram-bot'
 let VALUE = ''
 let STAGE: Stage = null
 
-bot.onText(/\/auth/, (msg, match) => {
-  auth(msg.chat.id)
+bot.onText(/\/auth/, async (msg, match) => {
+  await auth(msg.chat.id)
+  bot.sendSticker(msg.chat.id, 'CAACAgUAAxkBAAECiIVg4qSDJavupfoj3csX7qTAuN1hrQACsgIAAhExQFfgcZ-2saVC8SAE')
 })
 
 bot.on('message', (msg) => {
