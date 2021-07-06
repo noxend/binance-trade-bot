@@ -2,7 +2,7 @@ import createTelegramClient from './services/telegram-client'
 import bot from './services/telegram-bot'
 
 let VALUE = ''
-let STAGE: Stage = null
+let IS_INPUT = false
 
 bot.onText(/\/auth/, async (msg, match) => {
   await auth(msg.chat.id)
@@ -12,17 +12,8 @@ bot.onText(/\/auth/, async (msg, match) => {
 bot.on('message', (msg) => {
   if (!msg.text) return
 
-  switch (STAGE) {
-    case 'phone':
-      VALUE = msg.text
-      break
-
-    case 'code':
-      VALUE = msg.text
-      break
-
-    default:
-      break
+  if (IS_INPUT) {
+    VALUE = msg.text
   }
 })
 
@@ -32,15 +23,15 @@ const userClient = createTelegramClient()
 
 const input = (chatId: number, text: string, stage: Stage): Promise<string> =>
   new Promise(async (resolve) => {
-    STAGE = stage
+    IS_INPUT = true
 
     await bot.sendMessage(chatId, text)
 
     const interval = setInterval(() => {
-      if (STAGE && VALUE) {
+      if (VALUE) {
         clearInterval(interval)
         resolve(VALUE)
-        STAGE = null
+        IS_INPUT = false
         VALUE = ''
       }
     }, 1000)
@@ -53,8 +44,8 @@ async function auth(chatId: number) {
     phoneCode: () => input(chatId, 'Please enter code', 'code'),
     onError: (err) => {
       bot.sendMessage(chatId, `🔴 #ERROR: ${err.message}`)
+      IS_INPUT = false
       VALUE = ''
-      STAGE = null
     },
   })
 }
