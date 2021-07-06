@@ -17,11 +17,9 @@ bot.on('message', (msg) => {
   }
 })
 
-type Stage = 'phone' | 'code' | 'password' | null
-
 const userClient = createTelegramClient()
 
-const input = (chatId: number, text: string, stage: Stage): Promise<string> =>
+const input = (chatId: number, text: string): Promise<string> =>
   new Promise(async (resolve) => {
     IS_INPUT = true
 
@@ -39,9 +37,9 @@ const input = (chatId: number, text: string, stage: Stage): Promise<string> =>
 
 async function auth(chatId: number) {
   await userClient.start({
-    phoneNumber: () => input(chatId, 'Please enter phone number (+38...)', 'phone'),
-    password: () => input(chatId, 'Please enter password', 'password'),
-    phoneCode: () => input(chatId, 'Please enter code', 'code'),
+    phoneNumber: () => input(chatId, 'Please enter phone number (+38...)'),
+    password: () => input(chatId, 'Please enter password'),
+    phoneCode: () => input(chatId, 'Please enter code'),
     onError: (err) => {
       bot.sendMessage(chatId, `🔴 #ERROR: ${err.message}`)
       IS_INPUT = false
