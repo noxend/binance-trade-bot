@@ -1,6 +1,9 @@
 import createTelegramClient from './services/telegram-client'
 import bot from './services/telegram-bot'
 
+import { Api } from 'telegram'
+import config from './config'
+
 let VALUE = ''
 let IS_INPUT = false
 
@@ -36,17 +39,22 @@ const input = (chatId: number, text: string): Promise<string> =>
   })
 
 async function auth(chatId: number) {
-  await userClient.start({
-    qrCode: async ({ token, expires }) => {
-      console.log(token, expires)
-    },
-    phoneNumber: () => input(chatId, 'Please enter phone number (+38...)'),
-    password: () => input(chatId, 'Please enter password'),
-    phoneCode: () => input(chatId, 'Please enter code'),
-    onError: (err) => {
-      bot.sendMessage(chatId, `🔴 #ERROR: ${err.message}`)
-      IS_INPUT = false
-      VALUE = ''
-    },
-  })
+  await userClient.connect()
+
+  try {
+    const result = await userClient.invoke(
+      new Api.auth.SendCode({
+        phoneNumber: await input(chatId, 'phone number ?'),
+        apiHash: config.TELEGRAM_API_HASH,
+        apiId: +config.TELEGRAM_API_ID!,
+        settings: new Api.CodeSettings({}),
+      })
+    )
+
+    console.log(result.phoneCodeHash)
+  } catch (error) {
+    VALUE = ''
+    IS_INPUT = false
+    await bot.sendMessage(chatId, `🔴 ${error.message}`)
+  }
 }

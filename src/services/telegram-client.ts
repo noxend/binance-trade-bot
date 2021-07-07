@@ -10,7 +10,7 @@ export default (): TelegramClient => {
   const stringSession = new StringSession(process.env.SESSION)
 
   return new TelegramClient(stringSession, +config.TELEGRAM_API_ID, config.TELEGRAM_API_HASH, {
-    connectionRetries: 5,
     baseLogger: new Logger('warn'),
+    connectionRetries: 5,
   })
 }
