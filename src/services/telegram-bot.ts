@@ -17,7 +17,7 @@ if (config.NODE_ENV === 'production') {
   app.use(bodyParser.urlencoded({ extended: false }))
   app.use(bodyParser.json())
 
-  app.post('/', (req, res) => {
+  app.get('/', (req, res) => {
     res.sendStatus(200)
   })
 
