@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/express": "^4.17.13",
     "@types/node": "^15.14.0",
     "@types/node-telegram-bot-api": "^0.51.2",
     "@types/qs": "^6.9.6",
@@ -19,7 +20,9 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
+    "body-parser": "^1.19.0",
     "dotenv": "^10.0.0",
+    "express": "^4.17.1",
     "mongoose": "^5.13.1",
     "node-telegram-bot-api": "^0.53.0",
     "qs": "^6.10.1",
