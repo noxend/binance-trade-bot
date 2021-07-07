@@ -9,6 +9,7 @@ if (!config.TELEGRAM_BOT_TOKEN) throw new Error('Telegram token not provided')
 let bot: TelegramBot
 
 if (config.NODE_ENV === 'production') {
+  console.log(config)
   bot = new TelegramBot(config.TELEGRAM_BOT_TOKEN)
   bot.setWebHook(`${config.APP_HOST}/bot`)
 
@@ -27,7 +28,7 @@ if (config.NODE_ENV === 'production') {
   })
 
   app.listen(config.PORT, () => {
-    console.log('listening')
+    console.log('listening ok')
   })
 } else {
   bot = new TelegramBot(config.TELEGRAM_BOT_TOKEN, { polling: true })
