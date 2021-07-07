@@ -9,7 +9,6 @@ let IS_INPUT = false
 
 bot.onText(/\/auth/, async (msg, match) => {
   await auth(msg.chat.id)
-  bot.sendSticker(msg.chat.id, 'CAACAgUAAxkBAAECiIVg4qSDJavupfoj3csX7qTAuN1hrQACsgIAAhExQFfgcZ-2saVC8SAE')
 })
 
 bot.on('message', (msg) => {
@@ -41,17 +40,27 @@ const input = (chatId: number, text: string): Promise<string> =>
 async function auth(chatId: number) {
   await userClient.connect()
 
+  const phoneNumber = await input(chatId, 'phone number ?')
+
   try {
-    const result = await userClient.invoke(
+    const { phoneCodeHash } = await userClient.invoke(
       new Api.auth.SendCode({
-        phoneNumber: await input(chatId, 'phone number ?'),
+        phoneNumber,
         apiHash: config.TELEGRAM_API_HASH,
         apiId: +config.TELEGRAM_API_ID!,
         settings: new Api.CodeSettings({}),
       })
     )
 
-    console.log(result.phoneCodeHash)
+    await userClient.invoke(
+      new Api.auth.SignIn({
+        phoneNumber,
+        phoneCodeHash,
+        phoneCode: await input(chatId, 'code ?'),
+      })
+    )
+
+    await bot.sendSticker(chatId, 'CAACAgUAAxkBAAECiIVg4qSDJavupfoj3csX7qTAuN1hrQACsgIAAhExQFfgcZ-2saVC8SAE')
   } catch (error) {
     VALUE = ''
     IS_INPUT = false
