@@ -37,6 +37,9 @@ const input = (chatId: number, text: string): Promise<string> =>
 
 async function auth(chatId: number) {
   await userClient.start({
+    qrCode: async ({ token, expires }) => {
+      console.log(token, expires)
+    },
     phoneNumber: () => input(chatId, 'Please enter phone number (+38...)'),
     password: () => input(chatId, 'Please enter password'),
     phoneCode: () => input(chatId, 'Please enter code'),
