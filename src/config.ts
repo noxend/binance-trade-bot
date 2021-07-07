@@ -11,7 +11,7 @@ const config = {
   BINANCE_SECRET_KEY: process.env.BINANCE_SECRET_KEY,
   NODE_ENV: process.env.NODE_ENV || 'development',
   APP_HOST: process.env.APP_HOST,
-  PORT: process.env.APP_HOST || 8080,
+  PORT: process.env.PORT || 8080,
 }
 
 export default config
