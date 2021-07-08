@@ -19,7 +19,7 @@ bot.on('message', (msg) => {
   }
 })
 
-const userClient = createTelegramClient()
+const client = createTelegramClient()
 
 const input = (chatId: number, text: string): Promise<string> =>
   new Promise(async (resolve) => {
@@ -38,12 +38,12 @@ const input = (chatId: number, text: string): Promise<string> =>
   })
 
 async function auth(chatId: number) {
-  await userClient.connect()
+  await client.connect()
 
   const phoneNumber = await input(chatId, 'phone number ?')
 
   try {
-    const { phoneCodeHash } = await userClient.invoke(
+    const { phoneCodeHash } = await client.invoke(
       new Api.auth.SendCode({
         phoneNumber,
         apiHash: config.TELEGRAM_API_HASH,
@@ -52,7 +52,7 @@ async function auth(chatId: number) {
       })
     )
 
-    await userClient.invoke(
+    await client.invoke(
       new Api.auth.SignIn({
         phoneNumber,
         phoneCodeHash,
