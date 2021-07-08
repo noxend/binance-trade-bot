@@ -1,41 +1,27 @@
+import base64url from 'base64url'
+import { Api } from 'telegram'
+import qr from 'qrcode'
+
 import createTelegramClient from './services/telegram-client'
 import bot from './services/telegram-bot'
-
-import { Api } from 'telegram'
 import config from './config'
-
-let VALUE = ''
-let IS_INPUT = false
-
-bot.onText(/\/auth/, async (msg, match) => {
-  await auth(msg.chat.id)
-})
-
-bot.on('message', (msg) => {
-  if (!msg.text) return
-
-  if (IS_INPUT) {
-    VALUE = msg.text
-  }
-})
 
 const client = createTelegramClient()
 
-const input = (chatId: number, text: string): Promise<string> =>
-  new Promise(async (resolve) => {
-    IS_INPUT = true
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-    await bot.sendMessage(chatId, text)
+bot.onText(/\/auth/, async (msg, match) => {
+  await logInWithQrCode(msg.chat.id)
+})
 
-    const interval = setInterval(() => {
-      if (VALUE) {
-        clearInterval(interval)
-        resolve(VALUE)
-        IS_INPUT = false
-        VALUE = ''
-      }
-    }, 1000)
+const input = (chatId: number, text: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    bot.once('message', (msg) => {
+      if (msg.text) resolve(msg.text)
+      else reject(new Error('some error'))
+    })
   })
+}
 
 async function auth(chatId: number) {
   if (!client.connected) {
@@ -69,8 +55,38 @@ async function auth(chatId: number) {
 
     return result
   } catch (error) {
-    VALUE = ''
-    IS_INPUT = false
     await bot.sendMessage(chatId, `🔴 ${error.message}`)
   }
+}
+
+async function logInWithQrCode(chatId: number) {
+  if (!client.connected) {
+    await client.connect()
+  }
+
+  const result = await client.invoke(
+    new Api.auth.ExportLoginToken({
+      apiId: Number(config.TELEGRAM_API_ID),
+      apiHash: config.TELEGRAM_API_HASH,
+      exceptIds: [],
+    })
+  )
+
+  if (!(result instanceof Api.auth.LoginToken)) {
+    throw new Error('Unexpected')
+  }
+
+  const { token, expires } = result
+
+  const url = `tg://login?token=${base64url(token)}`
+
+  await qr.toFile('qr.png', url)
+
+  await bot.sendPhoto(chatId, 'qr.png')
+
+  client.addEventHandler((update: Api.TypeUpdate) => {
+    if (update instanceof Api.UpdateLoginToken) {
+      bot.sendMessage(chatId, client.session.save() as unknown as string)
+    }
+  })
 }
