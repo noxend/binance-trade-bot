@@ -8,13 +8,22 @@ import config from './config'
 
 const client = createTelegramClient()
 
-export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+bot.setMyCommands([
+  { command: 'qr', description: 'Login via qr code' },
+  { command: 'auth', description: 'Login via phone number' },
+])
 
 bot.onText(/\/auth/, async (msg, match) => {
+  await auth(msg.chat.id)
+})
+
+bot.onText(/\/qr/, async (msg, match) => {
   await logInWithQrCode(msg.chat.id)
 })
 
-const input = (chatId: number, text: string): Promise<string> => {
+const input = async (chatId: number, text: string): Promise<string> => {
+  await bot.sendMessage(chatId, text)
+
   return new Promise((resolve, reject) => {
     bot.once('message', (msg) => {
       if (msg.text) resolve(msg.text)
