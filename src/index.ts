@@ -52,6 +52,8 @@ async function auth(chatId: number) {
       })
     )
 
+    console.log(phoneCodeHash)
+
     await client.invoke(
       new Api.auth.SignIn({
         phoneNumber,
