@@ -38,21 +38,26 @@ const input = (chatId: number, text: string): Promise<string> =>
   })
 
 async function auth(chatId: number) {
-  await client.connect()
+  if (!client.connected) {
+    await client.connect()
+  }
+
+  if (await client.checkAuthorization()) {
+    return
+  }
 
   const phoneNumber = await input(chatId, 'phone number ?')
 
   try {
-    const { phoneCodeHash } = await client.invoke(
-      new Api.auth.SendCode({
-        phoneNumber,
+    const { phoneCodeHash } = await client.sendCode(
+      {
         apiHash: config.TELEGRAM_API_HASH,
-        apiId: +config.TELEGRAM_API_ID!,
-        settings: new Api.CodeSettings({}),
-      })
+        apiId: Number(config.TELEGRAM_API_ID),
+      },
+      phoneNumber
     )
 
-    await client.invoke(
+    const result = await client.invoke(
       new Api.auth.SignIn({
         phoneNumber,
         phoneCodeHash,
@@ -61,6 +66,8 @@ async function auth(chatId: number) {
     )
 
     await bot.sendSticker(chatId, 'CAACAgUAAxkBAAECiIVg4qSDJavupfoj3csX7qTAuN1hrQACsgIAAhExQFfgcZ-2saVC8SAE')
+
+    return result
   } catch (error) {
     VALUE = ''
     IS_INPUT = false
